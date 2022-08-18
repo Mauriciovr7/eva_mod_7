@@ -33,7 +33,7 @@ app.post('/usuario', async (req, res) => {
   try {
     // 1. me traigo los datos del formulario
     const form = await f.getForm(req)
-    console.log('post us ',form)
+    console.log('post us ', form)
 
     // 2. uso el modelo ppara crear un registro en la base de datos
     await Usuario.create({
@@ -50,17 +50,18 @@ app.post('/usuario', async (req, res) => {
 })
 
 app.get('/usuarios', async (req, res) => {
-  
+
   try {
     console.log('usuarios ssss ');
-  const usuarios = await Usuario.findAll({
-    include: [{
-      model: Monto
-    }]
-  })
-  console.log('usuarios ssss ',usuarios);
+    const usuarios = await Usuario.findAll({
+      include: [{
+        model: Monto
+      }]
+    })
+    console.log('usuarios ssss ', usuarios.rows);
 
-  res.json({usuarios})
+    // res.json({ usuarios })
+    res.json( usuarios )
 
     /* const ejercicio = await ejercicios.findAll()
     res.json({ rows: ejercicio }) */
