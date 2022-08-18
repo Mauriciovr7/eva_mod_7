@@ -22,19 +22,11 @@ app.use(express.urlencoded({ extended: true })) // para recibir datos de formula
 } */
 
 app.post('/usuario', async (req, res) => {
-  /* const nombre = req.body.nombre
-  const horario = req.body.horario
-
-  await Usuario.create({
-    nombre, horario
-  }) */
-
-  res.redirect('/')
+  // res.redirect('/')
   try {
     // 1. me traigo los datos del formulario
     const form = await f.getForm(req)
     console.log('post us ', form)
-
     // 2. uso el modelo ppara crear un registro en la base de datos
     await Usuario.create({
       nombre: form.nombre,
@@ -42,7 +34,6 @@ app.post('/usuario', async (req, res) => {
     })
     res.redirect('/')
     //res.json({})
-
   } catch (error) {
     console.log("Surgió un error: " + error);
     return res.status(400).redirect('/');
@@ -61,13 +52,63 @@ app.get('/usuarios', async (req, res) => {
     console.log('usuarios ssss ', usuarios.rows);
 
     // res.json({ usuarios })
-    res.json( usuarios )
+    res.json(usuarios)
 
     /* const ejercicio = await ejercicios.findAll()
     res.json({ rows: ejercicio }) */
 
   } catch (error) {
     console.log(error)
+  }
+})
+
+app.delete('/usuario', async (req, res) => {
+  const id = req.query.id;
+  console.log('id ',id)
+  if (id) {
+    try {
+      await Usuario.destroy({
+        where: { id }
+      })
+      res.status(200).redirect('/') // eliminado
+    } catch (error) {
+      console.log("Surgió un error: " + error);
+      return res.status(400).redirect('/') // 400 error
+    }
+  }
+})
+
+app.post('/transferencia', async (req, res) => {
+  // res.redirect('/')
+  try {
+    const form = await f.getForm(req)
+    console.log('post trans ', form) // ok
+
+
+    // const usuario_id = form.usuario_id
+    const emisor = form.emisor
+    const receptor = form.receptor
+    const monto = form.monto
+
+    const usuario = await Usuario.findByPk(usuario_id)
+    await usuario.createMonto({
+      nombre: nombre_monto
+    })
+
+    console.log(usuario);
+    res.redirect('/')
+    // 1. me traigo los datos del formulario
+    // const form = await f.getForm(req)
+    // 2. uso el modelo ppara crear un registro en la base de datos
+    await Monto.create({
+      nombre: form.nombre,
+      balance: form.balance
+    })
+    // res.redirect('/')
+    //res.json({})
+  } catch (error) {
+    console.log("Surgió un error: " + error);
+    return res.status(400).redirect('/');
   }
 })
 

@@ -33,10 +33,7 @@ const Usuario = db.define('usuario', {
 const Monto = db.define('monto', {
   valor: {
     type: DataTypes.INTEGER,
-    allowNull: false,
-    validate: {
-      min: 1
-    }
+    allowNull: false
   }
 }, { timestamps: true })
 
