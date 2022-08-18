@@ -26,10 +26,7 @@ const Usuario = db.define('usuario', {
   },
   balance: {
     type: DataTypes.INTEGER,
-    allowNull: false,
-    validate: {
-      min: 1
-    }
+    allowNull: false
   }
 }, { timestamps: true })
 

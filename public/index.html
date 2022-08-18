@@ -189,6 +189,7 @@
       let nombre = $("form:first input:first").val();
       let balance = Number($("form:first input:nth-child(2)").val());
       try {
+        console.log(nombre, balance)
         const response = await fetch("http://localhost:3000/usuario", {
           method: "post",
           body: JSON.stringify({
@@ -233,7 +234,9 @@
     const getUsuarios = async () => {
       const response = await fetch("http://localhost:3000/usuarios");
       let data = await response.json();
-      console.log(data);
+      console.log('getUsuarios front ');
+
+      console.log('data ',data);
 
       $(".usuarios").html("");
 

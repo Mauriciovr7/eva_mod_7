@@ -21,26 +21,53 @@ app.use(express.urlencoded({ extended: true })) // para recibir datos de formula
   });
 } */
 
-app.post('/usuarios', async (req, res) => {
-  const nombre = req.body.nombre
+app.post('/usuario', async (req, res) => {
+  /* const nombre = req.body.nombre
   const horario = req.body.horario
 
   await Usuario.create({
     nombre, horario
-  })
+  }) */
 
   res.redirect('/')
+  try {
+    // 1. me traigo los datos del formulario
+    const form = await f.getForm(req)
+    console.log('post us ',form)
+
+    // 2. uso el modelo ppara crear un registro en la base de datos
+    await Usuario.create({
+      nombre: form.nombre,
+      balance: form.balance
+    })
+    res.redirect('/')
+    //res.json({})
+
+  } catch (error) {
+    console.log("Surgió un error: " + error);
+    return res.status(400).redirect('/');
+  }
 })
 
 app.get('/usuarios', async (req, res) => {
-  console.log('usuarios ');
+  
+  try {
+    console.log('usuarios ssss ');
   const usuarios = await Usuario.findAll({
     include: [{
       model: Monto
     }]
   })
+  console.log('usuarios ssss ',usuarios);
 
   res.json({usuarios})
+
+    /* const ejercicio = await ejercicios.findAll()
+    res.json({ rows: ejercicio }) */
+
+  } catch (error) {
+    console.log(error)
+  }
 })
 
 app.get('/transferencias', async (req, res) => {
