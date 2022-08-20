@@ -189,7 +189,6 @@
       let nombre = $("form:first input:first").val();
       let balance = Number($("form:first input:nth-child(2)").val());
       try {
-        console.log(nombre, balance)
         const response = await fetch("http://localhost:3000/usuario", {
           method: "post",
           body: JSON.stringify({
@@ -234,9 +233,6 @@
     const getUsuarios = async () => {
       const response = await fetch("http://localhost:3000/usuarios");
       let data = await response.json();
-      console.log('getUsuarios front ');
-
-      console.log('data ',data);
 
       $(".usuarios").html("");
 
@@ -268,6 +264,7 @@
         method: "DELETE",
       });
       getUsuarios();
+      location.reload();
     };
 
     const getTransferencias = async () => {
@@ -275,6 +272,7 @@
       $(".transferencias").html("");
 
       data.forEach((t) => {
+
         $(".transferencias").append(`
        <tr>
          <td> ${formatDate(t[4])} </td>
@@ -287,7 +285,7 @@
     };
 
     getUsuarios();
-    // getTransferencias();
+    getTransferencias();
 
     const formatDate = (date) => {
       const dateFormat = moment(date).format("L");

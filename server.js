@@ -1,33 +1,15 @@
-const express = require('express');
+const express = require('express')
 const { Usuario, Monto } = require('./models.js')
 const f = require('./functionsUtils')
 
 const app = express()
 
-app.use(express.static('public')) // para manejo de archivos estáticos
-app.use(express.urlencoded({ extended: true })) // para recibir datos de formulario POST
-
-/* function getForm(req) {
-  return new Promise((res, rej) => {
-    let str = "";
-    req.on("data", function (chunk) {
-      str += chunk;
-    });
-    req.on("end", function () {
-      //console.log('str', str);
-      const obj = JSON.parse(str);
-      res(obj);
-    });
-  });
-} */
+app.use(express.static('public'))
+app.use(express.urlencoded({ extended: true }))
 
 app.post('/usuario', async (req, res) => {
-  // res.redirect('/')
   try {
-    // 1. me traigo los datos del formulario
     const form = await f.getForm(req)
-    console.log('post us ', form)
-    // 2. uso el modelo ppara crear un registro en la base de datos
     await Usuario.create({
       nombre: form.nombre,
       balance: form.balance
@@ -35,27 +17,21 @@ app.post('/usuario', async (req, res) => {
     res.redirect('/')
     //res.json({})
   } catch (error) {
-    console.log("Surgió un error: " + error);
-    return res.status(400).redirect('/');
+    console.log("Surgió un error: " + error)
+    return res.status(400).redirect('/')
   }
 })
 
 app.get('/usuarios', async (req, res) => {
 
   try {
-    console.log('usuarios ssss ');
     const usuarios = await Usuario.findAll({
       include: [{
         model: Monto
       }]
     })
-    console.log('usuarios ssss ', usuarios.rows);
 
-    // res.json({ usuarios })
     res.json(usuarios)
-
-    /* const ejercicio = await ejercicios.findAll()
-    res.json({ rows: ejercicio }) */
 
   } catch (error) {
     console.log(error)
@@ -63,77 +39,124 @@ app.get('/usuarios', async (req, res) => {
 })
 
 app.delete('/usuario', async (req, res) => {
-  const id = req.query.id;
-  console.log('id ',id)
+  const id = req.query.id
   if (id) {
     try {
       await Usuario.destroy({
         where: { id }
       })
-      res.status(200).redirect('/') // eliminado
+      res.json({})
     } catch (error) {
-      console.log("Surgió un error: " + error);
+      console.log("Surgió un error: " + error)
       return res.status(400).redirect('/') // 400 error
     }
   }
 })
 
+app.put('/usuario', async (req, res) => {
+  const form = await f.getForm(req)
+
+
+  const nombre = form.name
+  const balance = form.balance
+  const id = req.query.id
+  if (id) {
+
+    try {
+      const usuario = await Usuario.findOne({
+        where: { id }
+      })
+
+      await Usuario.update(
+        {
+          nombre,
+          balance
+        },
+        {
+          where: { id }
+        })
+      res.json(usuario)
+
+
+    } catch (error) {
+      console.log(error)
+      return res.redirect('/')
+    }
+  }
+
+})
+
 app.post('/transferencia', async (req, res) => {
-  // res.redirect('/')
   try {
     const form = await f.getForm(req)
-    console.log('post trans ', form) // ok
 
-
-    // const usuario_id = form.usuario_id
     const emisor = form.emisor
     const receptor = form.receptor
-    const monto = form.monto
+    const valor = form.monto
 
-    const usuario = await Usuario.findByPk(usuario_id)
-    await usuario.createMonto({
-      nombre: nombre_monto
+
+    const us_emisor = await Usuario.findOne({
+      where: { nombre: emisor }
     })
 
-    console.log(usuario);
-    res.redirect('/')
-    // 1. me traigo los datos del formulario
-    // const form = await f.getForm(req)
-    // 2. uso el modelo ppara crear un registro en la base de datos
+    if (emisor == receptor || us_emisor.balance < valor) {
+      return res.json({ 'msj': 'mismo o mucho' })
+    }
+    const usuarioId = us_emisor.id
+
     await Monto.create({
-      nombre: form.nombre,
-      balance: form.balance
+      valor,
+      emisor,
+      receptor,
+      usuarioId
     })
-    // res.redirect('/')
-    //res.json({})
+
+    const usuario = await Usuario.findOne({
+      where: { id: usuarioId }
+    })
+
+    const nuevo_valor = usuario.balance - valor
+
+    await Usuario.update(
+      {
+        balance: nuevo_valor
+      },
+      {
+        where: { id: usuarioId }
+      })
+
+    const us_receptor = await Usuario.findOne({
+      where: { nombre: receptor }
+    })
+
+    const nuevo_valor_receptor = parseInt(us_receptor.balance) + parseInt(valor)
+
+    await Usuario.update(
+      {
+        balance: nuevo_valor_receptor
+      },
+      {
+        where: { nombre: receptor }
+      })
+
+    res.json(usuario)
+
   } catch (error) {
-    console.log("Surgió un error: " + error);
-    return res.status(400).redirect('/');
+    console.log("Surgió un error: " + error)
+    return res.status(400).redirect('/')
   }
 })
 
 app.get('/transferencias', async (req, res) => {
-  /* const usuarios = await Usuario.findAll({
-    include: [{
-      model: Monto
-    }]
-  }) */
+  try {
+    const montos = await Monto.findAll()
+    const datos = montos.map(data => [data.id, data.emisor, data.receptor, data.valor, data.createdAt])
 
-  // res.json({usuarios})
-  res.json({})
-})
+    res.send(datos)
 
-app.post('/usuarios/montos', async (req, res) => {
-  const usuario_id = req.body.usuario_id
-  const nombre_monto = req.body.nombre_monto
-
-  const usuario = await Usuario.findByPk(usuario_id)
-  await usuario.createMonto({
-    nombre: nombre_monto
-  })
-
-  console.log(usuario);
-  res.redirect('/')
+  } catch (error) {
+    console.log(error)
+  }
 })
 
 app.get('*', (req, res) => {
@@ -142,7 +165,7 @@ app.get('*', (req, res) => {
 })
 
 app.listen(3000, () => {
-  console.log(`Servidor en puerto 3000`);
-});
+  console.log(`Servidor en puerto 3000`)
+})
 
 // nodemon server

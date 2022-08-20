@@ -1,7 +1,7 @@
 const Sequelize = require('sequelize')
 const { clave } = require('./clave.js')
 
-const db = new Sequelize('banco', 'postgres', clave, { 
+const db = new Sequelize('bancosolar', 'postgres', clave, { 
   //usuario ycontraseña son tus credenciales local MySQL
   host: 'localhost',
   dialect: 'postgres'

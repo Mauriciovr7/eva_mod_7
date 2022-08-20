@@ -1,32 +1,18 @@
-/* const Sequelize = require('sequelize'); */
 const { DataTypes } = require('sequelize');
 const db = require('./db_conection.js')
 
-/* const db = new Sequelize('cursos', 'postgres', '1005', { 
-  //usuario ycontraseña son tus credenciales local MySQL
-  host: 'localhost',
-  dialect: 'postgres'
-}); */
-
-// IIFE
-/* (async function () {
-  try {
-    await db.authenticate();
-    console.log('Connection has been established successfully.');
-  } catch (error) {
-    console.error('Unable to connect to the database:', error);
-  }
-})(); */
-
-
 const Usuario = db.define('usuario', {
   nombre: {
-    type: DataTypes.STRING,
+    type: DataTypes.STRING(50),
     allowNull: false
+    
   },
   balance: {
-    type: DataTypes.INTEGER,
-    allowNull: false
+    type: DataTypes.FLOAT              ,
+    allowNull: false,
+    validate: {
+      min: 0
+    }
   }
 }, { timestamps: true })
 
@@ -34,7 +20,19 @@ const Monto = db.define('monto', {
   valor: {
     type: DataTypes.INTEGER,
     allowNull: false
-  }
+  },
+  emisor: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  receptor: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  usuarioId: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  },
 }, { timestamps: true })
 
 Usuario.hasMany(Monto)
