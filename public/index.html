@@ -65,7 +65,7 @@
               <input type="text" class="form-control mx-2 w-auto d-inline" id="monto" />
             </div>
 
-            <button type="submit" class="btn btn-danger">Relalizar</button>
+            <button type="submit" class="btn btn-danger">Realizar</button>
           </div>
         </div>
       </form>
@@ -187,7 +187,9 @@
     $("form:first").submit(async (e) => {
       e.preventDefault();
       let nombre = $("form:first input:first").val();
-      let balance = Number($("form:first input:nth-child(2)").val());
+      // let balance = Number($("form:first input:nth-child(2)").val());
+      let balance = $("form:first input:nth-child(2)").val()
+
       try {
         const response = await fetch("http://localhost:3000/usuario", {
           method: "post",
@@ -196,6 +198,11 @@
             balance,
           }),
         });
+        const data = await response.json()
+        if (response.status >= 400) {
+          alert(data.error)
+          return
+        }
         $("form:first input:first").val("");
         $("form:first input:nth-child(2)").val("");
         location.reload();
@@ -223,6 +230,11 @@
           }),
         });
         const data = await response.json();
+        console.log('data ', data); // ****************************************************
+        if (response.status >= 400) {
+          alert(data.error)
+          return
+        }
         location.reload();
       } catch (e) {
         console.log(e);
@@ -271,6 +283,14 @@
       const { data } = await axios.get("http://localhost:3000/transferencias");
       $(".transferencias").html("");
 
+      const res = data
+      console.log('res ',res);
+
+        if (data.status >= 400) {
+          alert(res.error)
+          return
+        }
+        
       data.forEach((t) => {
 
         $(".transferencias").append(`

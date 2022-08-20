@@ -1,24 +1,32 @@
 const express = require('express')
 const { Usuario, Monto } = require('./models.js')
-const f = require('./functionsUtils')
+const f = require('./functions')
 
 const app = express()
+const port = 3000
 
 app.use(express.static('public'))
 app.use(express.urlencoded({ extended: true }))
 
 app.post('/usuario', async (req, res) => {
+
   try {
     const form = await f.getForm(req)
-    await Usuario.create({
-      nombre: form.nombre,
-      balance: form.balance
-    })
-    res.redirect('/')
-    //res.json({})
+    console.log('balance ', form.balance)
+    const nombre = form.nombre.replace(/\s+/g, ' ').trim()
+    console.log('nom ** ', nombre)
+    const balance = form.balance.trim()
+    if (f.usuarioValid(nombre) && f.balanceValid(balance)) {
+      await Usuario.create({
+        nombre,
+        balance
+      })
+      res.json({})
+    }
+
   } catch (error) {
-    console.log("Surgió un error: " + error)
-    return res.status(400).redirect('/')
+    console.log("Error usuario no ingresado: " + error)
+    res.status(400).json({ error })
   }
 })
 
@@ -56,7 +64,6 @@ app.delete('/usuario', async (req, res) => {
 app.put('/usuario', async (req, res) => {
   const form = await f.getForm(req)
 
-
   const nombre = form.name
   const balance = form.balance
   const id = req.query.id
@@ -87,63 +94,76 @@ app.put('/usuario', async (req, res) => {
 })
 
 app.post('/transferencia', async (req, res) => {
+  console.log('transfer ******');
   try {
     const form = await f.getForm(req)
-
     const emisor = form.emisor
     const receptor = form.receptor
     const valor = form.monto
 
+    console.log('transfe ', emisor, receptor);
 
     const us_emisor = await Usuario.findOne({
       where: { nombre: emisor }
     })
 
-    if (emisor == receptor || us_emisor.balance < valor) {
-      return res.json({ 'msj': 'mismo o mucho' })
-    }
-    const usuarioId = us_emisor.id
+    if (f.balanceValid(valor, us_emisor.balance) && f.emisorValid(emisor, receptor)) {
+      console.log('ok ok ok ok ok');
+      const usuarioId = us_emisor.id
 
-    await Monto.create({
-      valor,
-      emisor,
-      receptor,
-      usuarioId
-    })
+      await Monto.create({
+        valor,
+        emisor,
+        receptor,
+        usuarioId
+      })
 
-    const usuario = await Usuario.findOne({
-      where: { id: usuarioId }
-    })
-
-    const nuevo_valor = usuario.balance - valor
-
-    await Usuario.update(
-      {
-        balance: nuevo_valor
-      },
-      {
+      const usuario = await Usuario.findOne({
         where: { id: usuarioId }
       })
 
-    const us_receptor = await Usuario.findOne({
-      where: { nombre: receptor }
-    })
+      const nuevo_valor = usuario.balance - valor
 
-    const nuevo_valor_receptor = parseInt(us_receptor.balance) + parseInt(valor)
+      await Usuario.update(
+        {
+          balance: nuevo_valor
+        },
+        {
+          where: { id: usuarioId }
+        })
 
-    await Usuario.update(
-      {
-        balance: nuevo_valor_receptor
-      },
-      {
+      const us_receptor = await Usuario.findOne({
         where: { nombre: receptor }
       })
 
-    res.json(usuario)
+      const nuevo_valor_receptor = parseInt(us_receptor.balance) + parseInt(valor)
+
+      await Usuario.update(
+        {
+          balance: nuevo_valor_receptor
+        },
+        {
+          where: { nombre: receptor }
+        })
+
+      res.json(usuario)
+    }
+    /* if (emisor == receptor || us_emisor.balance < valor) { // ***********************
+      console.log('mismo');
+      return error
+      // return res.send('mismo o mucho')
+      // return res.send({err:'mismo o mucho'})
+
+      // res.status(400).json({'mismo o mucho'})
+    } */
+
+
+
 
   } catch (error) {
     console.log("Surgió un error: " + error)
-    return res.status(400).redirect('/')
+    // return res.status(400).redirect('/')
+    res.status(400).json({ error })
   }
 })
 
@@ -159,13 +179,18 @@ app.get('/transferencias', async (req, res) => {
   }
 })
 
-app.get('*', (req, res) => {
-  res.statusCode = 404
-  res.send('Ruta no implementada')
+app.use((req, res) => {
+  res.status(404).send(`
+  <html>
+    <h2>...ruta no existe</h2>
+    <a href="/">
+      <button>Volver</button>
+    </a>
+  </html>`)
 })
 
-app.listen(3000, () => {
-  console.log(`Servidor en puerto 3000`)
+app.listen(port, () => {
+  console.log(`Servidor en puerto http://localhost:${port}`)
 })
 
 // nodemon server

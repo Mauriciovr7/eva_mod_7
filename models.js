@@ -18,7 +18,7 @@ const Usuario = db.define('usuario', {
 
 const Monto = db.define('monto', {
   valor: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.FLOAT,
     allowNull: false
   },
   emisor: {
