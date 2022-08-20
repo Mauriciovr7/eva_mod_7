@@ -1,4 +1,4 @@
-const { DataTypes } = require('sequelize');
+const { DataTypes } = require('sequelize')
 const db = require('./db_conection.js')
 
 const Usuario = db.define('usuario', {
@@ -41,7 +41,7 @@ Monto.belongsTo(Usuario)
 try {
   db.sync()
 } catch (err) {
-  console.log(`Error en la sicnronizacion`, err);
+  console.log(`Error en la sicnronizacion`, err)
 }
 
 module.exports = { Usuario, Monto }

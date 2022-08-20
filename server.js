@@ -1,6 +1,6 @@
 const express = require('express')
-const { Usuario, Monto } = require('./models.js')
-const f = require('./functions')
+const { Usuario, Monto } = require('./controllers/models.js')
+const f = require('./controllers/functions')
 
 const app = express()
 const port = 3000
@@ -12,9 +12,7 @@ app.post('/usuario', async (req, res) => {
 
   try {
     const form = await f.getForm(req)
-    console.log('balance ', form.balance)
     const nombre = form.nombre.replace(/\s+/g, ' ').trim()
-    console.log('nom ** ', nombre)
     const balance = form.balance.trim()
     if (f.usuarioValid(nombre) && f.balanceValid(balance)) {
       await Usuario.create({
@@ -94,21 +92,17 @@ app.put('/usuario', async (req, res) => {
 })
 
 app.post('/transferencia', async (req, res) => {
-  console.log('transfer ******');
   try {
     const form = await f.getForm(req)
     const emisor = form.emisor
     const receptor = form.receptor
     const valor = form.monto
 
-    console.log('transfe ', emisor, receptor);
-
     const us_emisor = await Usuario.findOne({
       where: { nombre: emisor }
     })
 
     if (f.balanceValid(valor, us_emisor.balance) && f.emisorValid(emisor, receptor)) {
-      console.log('ok ok ok ok ok');
       const usuarioId = us_emisor.id
 
       await Monto.create({
@@ -148,17 +142,6 @@ app.post('/transferencia', async (req, res) => {
 
       res.json(usuario)
     }
-    /* if (emisor == receptor || us_emisor.balance < valor) { // ***********************
-      console.log('mismo');
-      return error
-      // return res.send('mismo o mucho')
-      // return res.send({err:'mismo o mucho'})
-
-      // res.status(400).json({'mismo o mucho'})
-    } */
-
-
-
 
   } catch (error) {
     console.log("Surgió un error: " + error)
