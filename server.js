@@ -8,13 +8,26 @@ const port = 3000
 app.use(express.static('public'))
 app.use(express.urlencoded({ extended: true }))
 
+// usuario POST
 app.post('/usuario', async (req, res) => {
 
   try {
+
     const form = await f.getForm(req)
     const nombre = form.nombre.replace(/\s+/g, ' ').trim()
     const balance = form.balance.trim()
+
     if (f.usuarioValid(nombre) && f.balanceValid(balance)) {
+
+      const usName = await Usuario.findOne({
+        where: { nombre },
+        include: [{
+          model: Monto
+        }]
+      })
+
+      if (usName != null) { if (usName.nombre) { throw 'usuario ya existe' } }
+
       await Usuario.create({
         nombre,
         balance
@@ -23,14 +36,17 @@ app.post('/usuario', async (req, res) => {
     }
 
   } catch (error) {
+
     console.log("Error usuario no ingresado: " + error)
     res.status(400).json({ error })
   }
 })
 
+// usuarios GET
 app.get('/usuarios', async (req, res) => {
 
   try {
+
     const usuarios = await Usuario.findAll({
       include: [{
         model: Monto
@@ -44,21 +60,7 @@ app.get('/usuarios', async (req, res) => {
   }
 })
 
-app.delete('/usuario', async (req, res) => {
-  const id = req.query.id
-  if (id) {
-    try {
-      await Usuario.destroy({
-        where: { id }
-      })
-      res.json({})
-    } catch (error) {
-      console.log("Surgió un error: " + error)
-      return res.status(400).redirect('/') // 400 error
-    }
-  }
-})
-
+// usuario PUT
 app.put('/usuario', async (req, res) => {
   const form = await f.getForm(req)
 
@@ -69,7 +71,10 @@ app.put('/usuario', async (req, res) => {
 
     try {
       const usuario = await Usuario.findOne({
-        where: { id }
+        where: { id },
+        include: [{
+          model: Monto
+        }]
       })
 
       await Usuario.update(
@@ -91,6 +96,30 @@ app.put('/usuario', async (req, res) => {
 
 })
 
+// usuario DELETE
+app.delete('/usuario', async (req, res) => {
+  const id = req.query.id
+  if (id) {
+    try {
+
+      await Monto.destroy({
+        where: { emisor: id }
+      })
+
+      await Usuario.destroy({
+        where: { id }
+      })
+
+
+      res.json({})
+    } catch (error) {
+      console.log("Surgió un error: " + error)
+      return res.status(400).redirect('/') // 400 error
+    }
+  }
+})
+
+// transferencia POST
 app.post('/transferencia', async (req, res) => {
   try {
     const form = await f.getForm(req)
@@ -99,21 +128,32 @@ app.post('/transferencia', async (req, res) => {
     const valor = form.monto
 
     const us_emisor = await Usuario.findOne({
-      where: { nombre: emisor }
+      where: { nombre: emisor },
+      include: [{
+        model: Monto
+      }]
     })
 
     if (f.balanceValid(valor, us_emisor.balance) && f.emisorValid(emisor, receptor)) {
-      const usuarioId = us_emisor.id
+
+      const us_receptor = await Usuario.findOne({
+        where: { nombre: receptor },
+        include: [{
+          model: Monto
+        }]
+      })
 
       await Monto.create({
         valor,
-        emisor,
-        receptor,
-        usuarioId
+        emisor: us_emisor.id,
+        receptor: us_receptor.id
       })
 
       const usuario = await Usuario.findOne({
-        where: { id: usuarioId }
+        where: { id: us_emisor.id },
+        include: [{
+          model: Monto
+        }]
       })
 
       const nuevo_valor = usuario.balance - valor
@@ -123,13 +163,8 @@ app.post('/transferencia', async (req, res) => {
           balance: nuevo_valor
         },
         {
-          where: { id: usuarioId }
+          where: { id: us_emisor.id }
         })
-
-      const us_receptor = await Usuario.findOne({
-        where: { nombre: receptor }
-      })
-
       const nuevo_valor_receptor = parseInt(us_receptor.balance) + parseInt(valor)
 
       await Usuario.update(
@@ -137,23 +172,40 @@ app.post('/transferencia', async (req, res) => {
           balance: nuevo_valor_receptor
         },
         {
-          where: { nombre: receptor }
+          where: { id: us_receptor.id }
         })
-
       res.json(usuario)
     }
 
   } catch (error) {
-    console.log("Surgió un error: " + error)
-    // return res.status(400).redirect('/')
     res.status(400).json({ error })
   }
 })
 
+// transferencias GET
 app.get('/transferencias', async (req, res) => {
   try {
-    const montos = await Monto.findAll()
-    const datos = montos.map(data => [data.id, data.emisor, data.receptor, data.valor, data.createdAt])
+    const montos = await Monto.findAll({ include: 'usuario' })
+
+    let datos = []
+    for (const monto of montos) {
+      emisor = await Usuario.findOne({
+        where: { id: monto.emisor } }, { attributes: ['nombre'],
+        include: [{
+          model: Monto
+        }]
+      })
+
+      receptor = await Usuario.findOne({
+        where: { id: monto.receptor } }, { attributes: ['nombre'],
+        include: [{
+          model: Monto
+        }]
+      });
+      (receptor === null) ? receptor = 'Eliminado' : receptor = receptor.nombre
+      emisor = emisor.nombre
+      datos.push([monto.id, emisor, receptor, monto.valor, monto.createdAt])
+  }
 
     res.send(datos)
 

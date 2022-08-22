@@ -12,19 +12,21 @@ function getForm(req) {
 }
 
 const usuarioValid = (user) => {
-  if (isNaN(user)) {
+  if (user.length > 50){
+    throw 'usuario debe contener maximo 50 caracteres'
+  } else if (isNaN(user)) {
     return true
-  } else {
+  } else  {
     throw 'usuario debe empezar con letra'
   }
 }
 
 const balanceValid = (balance, valor) => {
   const regex = new RegExp('^[0-9]+([.][0-9]+)?$')
-  if (!regex.test(balance)) {
-    throw 'balance debe ser en formato de numero(decimales con punto (.))'
-  } else if (balance < 1) {
-    throw 'monto no puede ser menor a 1'
+  if (balance <= 0) {
+    throw 'monto no puede ser menor o igual a 0'
+  } else if (!regex.test(balance)) {
+    throw 'balance debe ser en formato de numero (decimales con punto (.))'
   } else if (balance > valor) {
     throw 'monto exedido'
   } else {

@@ -4,7 +4,8 @@ const db = require('./db_conection.js')
 const Usuario = db.define('usuario', {
   nombre: {
     type: DataTypes.STRING(50),
-    allowNull: false
+    allowNull: false,
+    unique: true
     
   },
   balance: {
@@ -22,21 +23,22 @@ const Monto = db.define('monto', {
     allowNull: false
   },
   emisor: {
-    type: DataTypes.STRING,
-    allowNull: true
-  },
-  receptor: {
-    type: DataTypes.STRING,
-    allowNull: true
-  },
-  usuarioId: {
     type: DataTypes.INTEGER,
     allowNull: false
+  },
+  receptor: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: Usuario,
+      key: 'id'
+  }, 
   },
 }, { timestamps: true })
 
 Usuario.hasMany(Monto)
-Monto.belongsTo(Usuario)
+Monto.belongsTo(Usuario, { foreignKey: "emisor", onDelete: 'CASCADE' })
+Monto.belongsTo(Usuario, { foreignKey: "receptor", onDelete: 'CASCADE' })
 
 try {
   db.sync()
