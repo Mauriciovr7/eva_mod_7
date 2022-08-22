@@ -170,7 +170,7 @@
       const name = $("#nombreEdit").val();
       const balance = $("#balanceEdit").val();
       try {
-        const { data } = await axios.put(
+        const respuesta= await axios.put(
           `http://localhost:3000/usuario?id=${id}`,
           {
             name,
@@ -180,7 +180,9 @@
         $("#exampleModal").modal("hide");
         location.reload();
       } catch (e) {
-        alert("Algo salió mal..." + e);
+        // alert("Algo salió mal..." + e);
+        alert("Algo salió mal..." + e.response.data.error);
+
       }
     };
 
@@ -229,9 +231,7 @@
             monto,
           }),
         });
-        console.log('response ', response);
         data = await response.json();
-        console.log('data ', data); // ****************************************************
         if (response.status >= 400) {
           alert(data.error)
           return
@@ -285,7 +285,6 @@
       $(".transferencias").html("");
 
       const res = data
-      console.log('res ',res);
 
         if (data.status >= 400) {
           alert(res.error)

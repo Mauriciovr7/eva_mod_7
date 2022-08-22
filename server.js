@@ -1,5 +1,5 @@
 const express = require('express')
-const { Usuario, Monto } = require('./controllers/models.js')
+const { Usuario, Transferencia } = require('./controllers/models.js')
 const f = require('./controllers/functions')
 
 const app = express()
@@ -22,7 +22,7 @@ app.post('/usuario', async (req, res) => {
       const usName = await Usuario.findOne({
         where: { nombre },
         include: [{
-          model: Monto
+          model: Transferencia
         }]
       })
 
@@ -49,7 +49,7 @@ app.get('/usuarios', async (req, res) => {
 
     const usuarios = await Usuario.findAll({
       include: [{
-        model: Monto
+        model: Transferencia
       }]
     })
 
@@ -70,27 +70,29 @@ app.put('/usuario', async (req, res) => {
   if (id) {
 
     try {
-      const usuario = await Usuario.findOne({
-        where: { id },
-        include: [{
-          model: Monto
-        }]
-      })
-
-      await Usuario.update(
-        {
-          nombre,
-          balance
-        },
-        {
-          where: { id }
+      if (f.usuarioValid(nombre) && f.balanceValid(balance)) {
+        const usuario = await Usuario.findOne({
+          where: { id },
+          include: [{
+            model: Transferencia
+          }]
         })
-      res.json(usuario)
 
+        await Usuario.update(
+          {
+            nombre,
+            balance
+          },
+          {
+            where: { id }
+          })
+        res.json(usuario)
+
+      }
 
     } catch (error) {
-      console.log(error)
-      return res.redirect('/')
+      console.log("Error usuario no ingresado: " + error)
+      res.status(400).json({ error })
     }
   }
 
@@ -102,7 +104,7 @@ app.delete('/usuario', async (req, res) => {
   if (id) {
     try {
 
-      await Monto.destroy({
+      await Transferencia.destroy({
         where: { emisor: id }
       })
 
@@ -130,7 +132,7 @@ app.post('/transferencia', async (req, res) => {
     const us_emisor = await Usuario.findOne({
       where: { nombre: emisor },
       include: [{
-        model: Monto
+        model: Transferencia
       }]
     })
 
@@ -139,11 +141,11 @@ app.post('/transferencia', async (req, res) => {
       const us_receptor = await Usuario.findOne({
         where: { nombre: receptor },
         include: [{
-          model: Monto
+          model: Transferencia
         }]
       })
 
-      await Monto.create({
+      await Transferencia.create({
         valor,
         emisor: us_emisor.id,
         receptor: us_receptor.id
@@ -152,7 +154,7 @@ app.post('/transferencia', async (req, res) => {
       const usuario = await Usuario.findOne({
         where: { id: us_emisor.id },
         include: [{
-          model: Monto
+          model: Transferencia
         }]
       })
 
@@ -185,27 +187,31 @@ app.post('/transferencia', async (req, res) => {
 // transferencias GET
 app.get('/transferencias', async (req, res) => {
   try {
-    const montos = await Monto.findAll({ include: 'usuario' })
+    const transferencias = await Transferencia.findAll({ include: 'usuario' })
 
     let datos = []
-    for (const monto of montos) {
+    for (const transferencia of transferencias) {
       emisor = await Usuario.findOne({
-        where: { id: monto.emisor } }, { attributes: ['nombre'],
+        where: { id: transferencia.emisor }
+      }, {
+        attributes: ['nombre'],
         include: [{
-          model: Monto
+          model: Transferencia
         }]
       })
 
       receptor = await Usuario.findOne({
-        where: { id: monto.receptor } }, { attributes: ['nombre'],
+        where: { id: transferencia.receptor }
+      }, {
+        attributes: ['nombre'],
         include: [{
-          model: Monto
+          model: Transferencia
         }]
       });
       (receptor === null) ? receptor = 'Eliminado' : receptor = receptor.nombre
       emisor = emisor.nombre
-      datos.push([monto.id, emisor, receptor, monto.valor, monto.createdAt])
-  }
+      datos.push([transferencia.id, emisor, receptor, transferencia.valor, transferencia.createdAt])
+    }
 
     res.send(datos)
 

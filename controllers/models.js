@@ -17,7 +17,7 @@ const Usuario = db.define('usuario', {
   }
 }, { timestamps: true })
 
-const Monto = db.define('monto', {
+const Transferencia = db.define('transferencia', {
   valor: {
     type: DataTypes.FLOAT,
     allowNull: false
@@ -36,9 +36,9 @@ const Monto = db.define('monto', {
   },
 }, { timestamps: true })
 
-Usuario.hasMany(Monto)
-Monto.belongsTo(Usuario, { foreignKey: "emisor", onDelete: 'CASCADE' })
-Monto.belongsTo(Usuario, { foreignKey: "receptor", onDelete: 'CASCADE' })
+Usuario.hasMany(Transferencia)
+Transferencia.belongsTo(Usuario, { foreignKey: "emisor", onDelete: 'CASCADE' })
+Transferencia.belongsTo(Usuario, { foreignKey: "receptor", onDelete: 'CASCADE' })
 
 try {
   db.sync()
@@ -46,4 +46,5 @@ try {
   console.log(`Error en la sicnronizacion`, err)
 }
 
-module.exports = { Usuario, Monto }
+// mas fácil y rápido con emisor y receptor como string con nombres de los usuarios, así se hace la union sólo con fkey automática de sequelize (usuarioId)
+module.exports = { Usuario, Transferencia }
